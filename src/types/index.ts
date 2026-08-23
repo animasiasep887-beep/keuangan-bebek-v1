@@ -84,7 +84,7 @@ export interface TransaksiKeuangan {
 export interface AsetTetap {
   id: string;
   namaAset: string;
-  kategori: 'KANDANG' | 'PERALATAN' | 'BIOLOGIS_BEBEK';
+  kategori: 'KANDANG' | 'PERALATAN' | 'BIOLOGIS_BEBEK' | 'KENDARAAN' | 'LAINNYA';
   nilaiPerolehan: number;
   akumulasiPenyusutan: number;
   nilaiBuku: number;

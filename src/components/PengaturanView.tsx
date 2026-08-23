@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { RefreshCw, PlusCircle, CheckCircle2, BookOpen, Trash2 } from 'lucide-react';
-import type { Kandang, PopulasiBebek, KodeAkun } from '../types';
+import { RefreshCw, PlusCircle, CheckCircle2, BookOpen, Trash2, Layers } from 'lucide-react';
+import type { Kandang, PopulasiBebek, KodeAkun, StatusPopulasi, TipeAkun, SaldoNormal } from '../types';
 import { StorageService } from '../services/storage';
 
 interface PengaturanViewProps {
@@ -21,11 +21,28 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
   onResetDemo,
 }) => {
   const [activeTab, setActiveTab] = useState<'kandang' | 'populasi' | 'coa'>('kandang');
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Form for New Kandang
   const [namaKandang, setNamaKandang] = useState('');
   const [kapasitas, setKapasitas] = useState(500);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Form for New Populasi
+  const [showPopulasiForm, setShowPopulasiForm] = useState(false);
+  const [popKandangId, setPopKandangId] = useState(kandangList[0]?.id || 'k-1');
+  const [kodeBatch, setKodeBatch] = useState('');
+  const [tglMasuk, setTglMasuk] = useState(new Date().toISOString().split('T')[0]);
+  const [jumlahAwal, setJumlahAwal] = useState<number>(500);
+  const [hargaBeliPerEkor, setHargaBeliPerEkor] = useState<number>(75000);
+  const [umurMinggu, setUmurMinggu] = useState<number>(20);
+  const [statusPopulasi, setStatusPopulasi] = useState<StatusPopulasi>('PRODUKTIF');
+
+  // Form for New COA
+  const [showCoaForm, setShowCoaForm] = useState(false);
+  const [kodeAkunInput, setKodeAkunInput] = useState('');
+  const [namaAkunInput, setNamaAkunInput] = useState('');
+  const [tipeAkunInput, setTipeAkunInput] = useState<TipeAkun>('EXPENSE');
+  const [saldoNormalInput, setSaldoNormalInput] = useState<SaldoNormal>('DEBIT');
 
   const handleAddKandang = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +60,53 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
     setNamaKandang('');
     onRefreshData();
 
+    setTimeout(() => setSuccessMsg(null), 2000);
+  };
+
+  const handleAddPopulasi = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!kodeBatch.trim() || jumlahAwal <= 0) {
+      alert('Mohon isi kode batch dan jumlah ekor bebek!');
+      return;
+    }
+
+    StorageService.addPopulasi({
+      kandangId: popKandangId,
+      kodeBatch,
+      tglMasuk,
+      jumlahAwal,
+      jumlahSaatIni: jumlahAwal,
+      hargaBeliPerEkor,
+      umurMinggu,
+      status: statusPopulasi,
+    });
+
+    setSuccessMsg(`Batch Populasi ${kodeBatch} Berhasil Ditambahkan!`);
+    onRefreshData();
+    setShowPopulasiForm(false);
+    setKodeBatch('');
+    setTimeout(() => setSuccessMsg(null), 2000);
+  };
+
+  const handleAddCoa = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!kodeAkunInput.trim() || !namaAkunInput.trim()) {
+      alert('Mohon isi kode akun dan nama akun!');
+      return;
+    }
+
+    StorageService.addKodeAkun({
+      kode: kodeAkunInput,
+      nama: namaAkunInput,
+      tipe: tipeAkunInput,
+      saldoNormal: saldoNormalInput,
+    });
+
+    setSuccessMsg(`Kode Akun [${kodeAkunInput}] ${namaAkunInput} Berhasil Ditambahkan!`);
+    onRefreshData();
+    setShowCoaForm(false);
+    setKodeAkunInput('');
+    setNamaAkunInput('');
     setTimeout(() => setSuccessMsg(null), 2000);
   };
 
@@ -74,7 +138,7 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800">
             <button
               onClick={() => setActiveTab('kandang')}
@@ -124,7 +188,7 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
 
       {successMsg && (
         <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" />
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           {successMsg}
         </div>
       )}
@@ -171,26 +235,30 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
           <div className="md:col-span-2 glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
             <h3 className="text-sm font-bold text-white">Daftar Kandang Terdaftar</h3>
             <div className="space-y-2">
-              {kandangList.map((k) => (
-                <div key={k.id} className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-white text-sm">{k.namaKandang}</p>
-                    <p className="text-xs text-slate-400">Kapasitas Maksimal: {k.kapasitas} ekor</p>
+              {kandangList.length === 0 ? (
+                <p className="text-xs text-slate-400 italic py-4">Belum ada unit kandang terdaftar.</p>
+              ) : (
+                kandangList.map((k) => (
+                  <div key={k.id} className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-white text-sm">{k.namaKandang}</p>
+                      <p className="text-xs text-slate-400">Kapasitas Maksimal: {k.kapasitas} ekor</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="px-2.5 py-1 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        {k.status}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteKandang(k.id)}
+                        className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors"
+                        title="Hapus Kandang Ini"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="px-2.5 py-1 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      {k.status}
-                    </span>
-                    <button
-                      onClick={() => handleDeleteKandang(k.id)}
-                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors"
-                      title="Hapus Kandang Ini"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -199,7 +267,124 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
       {/* TAB 2: Populasi */}
       {activeTab === 'populasi' && (
         <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
-          <h3 className="text-sm font-bold text-white">Batch Populasi Bebek Petelur</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Layers className="w-4 h-4 text-amber-400" />
+              Batch Populasi Bebek Petelur
+            </h3>
+            <button
+              onClick={() => setShowPopulasiForm(!showPopulasiForm)}
+              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              {showPopulasiForm ? 'Tutup Form' : '+ Tambah Batch Populasi'}
+            </button>
+          </div>
+
+          {/* Form Input Batch Populasi */}
+          {showPopulasiForm && (
+            <form onSubmit={handleAddPopulasi} className="bg-slate-900/80 p-4 rounded-xl border border-slate-700 space-y-3 text-xs">
+              <h4 className="font-bold text-amber-400 text-sm">Input Batch Populasi Bebek Baru</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Kandang</label>
+                  <select
+                    value={popKandangId}
+                    onChange={(e) => setPopKandangId(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                  >
+                    {kandangList.map((k) => (
+                      <option key={k.id} value={k.id}>{k.namaKandang}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Kode Batch</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: BATCH-2026-A1"
+                    value={kodeBatch}
+                    onChange={(e) => setKodeBatch(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Tanggal Masuk</label>
+                  <input
+                    type="date"
+                    value={tglMasuk}
+                    onChange={(e) => setTglMasuk(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Jumlah Ekor Bebek</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={jumlahAwal}
+                    onChange={(e) => setJumlahAwal(parseInt(e.target.value) || 0)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Harga Beli / Ekor (Rp)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={hargaBeliPerEkor}
+                    onChange={(e) => setHargaBeliPerEkor(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Umur Bebek (Minggu)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={umurMinggu}
+                    onChange={(e) => setUmurMinggu(parseInt(e.target.value) || 1)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Status Populasi</label>
+                  <select
+                    value={statusPopulasi}
+                    onChange={(e) => setStatusPopulasi(e.target.value as StatusPopulasi)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                  >
+                    <option value="PRODUKTIF">PRODUKTIF</option>
+                    <option value="PEMBESARAN">PEMBESARAN</option>
+                    <option value="AFKIR">AFKIR</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowPopulasiForm(false)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold hover:bg-amber-400"
+                >
+                  Simpan Batch Populasi
+                </button>
+              </div>
+            </form>
+          )}
+
           <div className="overflow-x-auto rounded-xl border border-slate-800 text-xs">
             <table className="w-full text-left text-slate-300">
               <thead className="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider font-bold">
@@ -214,29 +399,37 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 bg-slate-950/40">
-                {populasiList.map((pop) => (
-                  <tr key={pop.id}>
-                    <td className="px-4 py-3 font-bold text-amber-400">{pop.kodeBatch}</td>
-                    <td className="px-4 py-3">{pop.tglMasuk}</td>
-                    <td className="px-4 py-3">{pop.jumlahAwal} ekor</td>
-                    <td className="px-4 py-3 font-extrabold text-emerald-400">{pop.jumlahSaatIni} ekor</td>
-                    <td className="px-4 py-3">{pop.umurMinggu} minggu</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400">
-                        {pop.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDeletePopulasi(pop.id)}
-                        className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors"
-                        title="Hapus Populasi Ini"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                {populasiList.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
+                      Belum ada batch populasi terdaftar.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  populasiList.map((pop) => (
+                    <tr key={pop.id}>
+                      <td className="px-4 py-3 font-bold text-amber-400">{pop.kodeBatch}</td>
+                      <td className="px-4 py-3">{pop.tglMasuk}</td>
+                      <td className="px-4 py-3">{pop.jumlahAwal} ekor</td>
+                      <td className="px-4 py-3 font-extrabold text-emerald-400">{pop.jumlahSaatIni} ekor</td>
+                      <td className="px-4 py-3">{pop.umurMinggu} minggu</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400">
+                          {pop.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeletePopulasi(pop.id)}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors"
+                          title="Hapus Populasi Ini"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -246,10 +439,92 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
       {/* TAB 3: Chart of Accounts */}
       {activeTab === 'coa' && (
         <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-amber-400" />
-            Chart of Accounts (Daftar Akun Akuntansi Standar)
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              Chart of Accounts (Daftar Akun Akuntansi Standar)
+            </h3>
+            <button
+              onClick={() => setShowCoaForm(!showCoaForm)}
+              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              {showCoaForm ? 'Tutup Form' : '+ Tambah Kode Akun'}
+            </button>
+          </div>
+
+          {/* Form Input Kode Akun */}
+          {showCoaForm && (
+            <form onSubmit={handleAddCoa} className="bg-slate-900/80 p-4 rounded-xl border border-slate-700 space-y-3 text-xs">
+              <h4 className="font-bold text-amber-400 text-sm">Input Kode Akun Baru</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Kode Akun</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: 507"
+                    value={kodeAkunInput}
+                    onChange={(e) => setKodeAkunInput(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Nama Akun</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Beban Transportasi & Distribusi"
+                    value={namaAkunInput}
+                    onChange={(e) => setNamaAkunInput(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Tipe Akun</label>
+                  <select
+                    value={tipeAkunInput}
+                    onChange={(e) => setTipeAkunInput(e.target.value as TipeAkun)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                  >
+                    <option value="ASSET">ASSET</option>
+                    <option value="LIABILITY">LIABILITY</option>
+                    <option value="EQUITY">EQUITY</option>
+                    <option value="REVENUE">REVENUE</option>
+                    <option value="EXPENSE">EXPENSE</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Saldo Normal</label>
+                  <select
+                    value={saldoNormalInput}
+                    onChange={(e) => setSaldoNormalInput(e.target.value as SaldoNormal)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                  >
+                    <option value="DEBIT">DEBIT</option>
+                    <option value="KREDIT">KREDIT</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowCoaForm(false)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold hover:bg-amber-400"
+                >
+                  Simpan Kode Akun
+                </button>
+              </div>
+            </form>
+          )}
+
           <div className="overflow-x-auto rounded-xl border border-slate-800 text-xs">
             <table className="w-full text-left text-slate-300">
               <thead className="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider font-bold">

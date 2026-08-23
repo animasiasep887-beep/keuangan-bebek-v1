@@ -249,6 +249,85 @@ export const StorageService = {
     return created;
   },
 
+  // Add Aset Tetap
+  addAset: (newAset: Omit<AsetTetap, 'id' | 'penyusutanBulanan' | 'akumulasiPenyusutan' | 'nilaiBuku'> & { penyusutanBulanan?: number }): AsetTetap => {
+    const asetList = StorageService.getAset();
+    const masaManfaat = newAset.masaManfaatBulan || 1;
+    const penyusutanBulanan = newAset.penyusutanBulanan !== undefined && newAset.penyusutanBulanan > 0
+      ? newAset.penyusutanBulanan
+      : Math.round(newAset.nilaiPerolehan / masaManfaat);
+
+    const created: AsetTetap = {
+      ...newAset,
+      id: `ast-${Date.now()}`,
+      akumulasiPenyusutan: 0,
+      nilaiBuku: newAset.nilaiPerolehan,
+      penyusutanBulanan,
+    };
+
+    const updated = [created, ...asetList];
+    StorageService.saveAset(updated);
+    return created;
+  },
+
+  // Add Hutang / Piutang
+  addHutangPiutang: (newHp: Omit<HutangPiutang, 'id' | 'sisaNominal' | 'status'>): HutangPiutang => {
+    const hpList = StorageService.getHutangPiutang();
+    const created: HutangPiutang = {
+      ...newHp,
+      id: `hp-${Date.now()}`,
+      sisaNominal: newHp.nominalTotal,
+      status: 'BELUM_LUNAS',
+    };
+
+    const updated = [created, ...hpList];
+    StorageService.saveHutangPiutang(updated);
+    return created;
+  },
+
+  // Add Pakan
+  addPakan: (newPakan: Omit<PakanItem, 'id'>): PakanItem => {
+    const list = StorageService.getPakan();
+    const created: PakanItem = {
+      ...newPakan,
+      id: `pak-${Date.now()}`,
+    };
+    const updated = [...list, created];
+    StorageService.savePakan(updated);
+    return created;
+  },
+
+  // Restock or edit pakan stock
+  restockPakan: (pakanId: string, tambahKg: number) => {
+    const list = StorageService.getPakan();
+    const updated = list.map((p) => (p.id === pakanId ? { ...p, stokKg: p.stokKg + tambahKg } : p));
+    StorageService.savePakan(updated);
+  },
+
+  // Add Batch Populasi
+  addPopulasi: (newPop: Omit<PopulasiBebek, 'id'>): PopulasiBebek => {
+    const list = StorageService.getPopulasi();
+    const created: PopulasiBebek = {
+      ...newPop,
+      id: `pop-${Date.now()}`,
+    };
+    const updated = [...list, created];
+    StorageService.savePopulasi(updated);
+    return created;
+  },
+
+  // Add Kode Akun
+  addKodeAkun: (newAkun: Omit<KodeAkun, 'id'>): KodeAkun => {
+    const list = StorageService.getKodeAkun();
+    const created: KodeAkun = {
+      ...newAkun,
+      id: newAkun.kode,
+    };
+    const updated = [...list, created];
+    setStoredData('kode_akun', updated);
+    return created;
+  },
+
   // Calculate High-level Dashboard Metrics
   calculateMetrics: (): FarmMetricsSummary => {
     const trxs = StorageService.getTransaksi();

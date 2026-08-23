@@ -45,6 +45,14 @@ export const OperasionalView: React.FC<OperasionalViewProps> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Form State - Tambah Pakan Baru / Restock
+  const [showPakanForm, setShowPakanForm] = useState<boolean>(false);
+  const [namaPakanBaru, setNamaPakanBaru] = useState('');
+  const [merkPakanBaru, setMerkPakanBaru] = useState('');
+  const [stokKgBaru, setStokKgBaru] = useState<number>(500);
+  const [hargaPerKgBaru, setHargaPerKgBaru] = useState<number>(8000);
+  const [minStokKgBaru, setMinStokKgBaru] = useState<number>(100);
+
   // Selected population live count
   const selectedPop = populasiList.find((p) => p.id === populasiId);
   const liveDuckCount = selectedPop ? selectedPop.jumlahSaatIni : 2435;
@@ -97,6 +105,46 @@ export const OperasionalView: React.FC<OperasionalViewProps> = ({
     if (confirm('Apakah Anda yakin ingin menghapus data panen harian ini?')) {
       const updated = logs.filter((l) => l.id !== id);
       StorageService.savePencatatanHarian(updated);
+      onRefreshData();
+    }
+  };
+
+  const handleAddPakanSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!namaPakanBaru.trim()) {
+      alert('Mohon isi nama pakan!');
+      return;
+    }
+    StorageService.addPakan({
+      namaPakan: namaPakanBaru,
+      merk: merkPakanBaru || 'Lokal / Standard',
+      stokKg: stokKgBaru,
+      hargaPerKg: hargaPerKgBaru,
+      minStokKg: minStokKgBaru,
+    });
+    setSuccessMessage('Stok Pakan Baru Berhasil Ditambahkan!');
+    onRefreshData();
+    setShowPakanForm(false);
+    setNamaPakanBaru('');
+    setMerkPakanBaru('');
+    setTimeout(() => setSuccessMessage(null), 2000);
+  };
+
+  const handleRestockPakan = (id: string, nama: string) => {
+    const qtyStr = prompt(`Masukkan jumlah restock pakan (kg) untuk ${nama}:`, '100');
+    if (!qtyStr) return;
+    const qty = parseFloat(qtyStr);
+    if (!isNaN(qty) && qty > 0) {
+      StorageService.restockPakan(id, qty);
+      setSuccessMessage(`Stok ${nama} berhasil ditambah ${qty} kg!`);
+      onRefreshData();
+      setTimeout(() => setSuccessMessage(null), 2000);
+    }
+  };
+
+  const handleDeletePakan = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus jenis pakan ini?')) {
+      StorageService.deletePakan(id);
       onRefreshData();
     }
   };
@@ -446,16 +494,125 @@ export const OperasionalView: React.FC<OperasionalViewProps> = ({
       {/* VIEW 3: Stok Pakan & Nutrisi */}
       {activeTab === 'pakan' && (
         <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
-          <h3 className="text-base font-bold text-white">Inventaris Pakan & Nutrisi Kandang</h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-white">Inventaris Pakan & Nutrisi Kandang</h3>
+              <p className="text-xs text-slate-400">Kelola stok konsentrat, dedak, dan nutrisi harian peternakan.</p>
+            </div>
+            <button
+              onClick={() => setShowPakanForm(!showPakanForm)}
+              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md"
+            >
+              <PlusCircle className="w-4 h-4" />
+              {showPakanForm ? 'Tutup Form' : '+ Tambah Jenis Pakan'}
+            </button>
+          </div>
+
+          {/* Form Tambah Pakan Baru */}
+          {showPakanForm && (
+            <form onSubmit={handleAddPakanSubmit} className="bg-slate-900/80 p-4 rounded-xl border border-slate-700 space-y-3 text-xs">
+              <h4 className="font-bold text-amber-400 text-sm">Form Tambah Jenis Pakan Baru</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Nama Pakan</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Konsentrat Layer K-99"
+                    value={namaPakanBaru}
+                    onChange={(e) => setNamaPakanBaru(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Merk / Produsen</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Cargill / Petani Lokal"
+                    value={merkPakanBaru}
+                    onChange={(e) => setMerkPakanBaru(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Stok Awal (Kg)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={stokKgBaru}
+                    onChange={(e) => setStokKgBaru(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Harga Per Kg (Rp)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={hargaPerKgBaru}
+                    onChange={(e) => setHargaPerKgBaru(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Batas Minimum Peringatan (Kg)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={minStokKgBaru}
+                    onChange={(e) => setMinStokKgBaru(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowPakanForm(false)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold hover:bg-amber-400"
+                >
+                  Simpan Pakan Baru
+                </button>
+              </div>
+            </form>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {pakanList.map((pakan) => (
-              <div key={pakan.id} className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
+              <div key={pakan.id} className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-amber-400 text-sm">{pakan.namaPakan}</h4>
                   <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400">{pakan.merk}</span>
                 </div>
                 <p className="text-2xl font-black text-white">{pakan.stokKg} <span className="text-xs font-normal text-slate-400">kg tersisa</span></p>
                 <p className="text-xs text-slate-400">Harga per kg: Rp {pakan.hargaPerKg.toLocaleString('id-ID')}</p>
+                
+                <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
+                  <button
+                    onClick={() => handleRestockPakan(pakan.id, pakan.namaPakan)}
+                    className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold text-xs hover:bg-emerald-500/30 transition-colors"
+                  >
+                    + Restock (Tambah Kg)
+                  </button>
+                  <button
+                    onClick={() => handleDeletePakan(pakan.id)}
+                    className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors"
+                    title="Hapus Pakan Ini"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

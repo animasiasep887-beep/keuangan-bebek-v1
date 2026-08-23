@@ -65,16 +65,24 @@ export const LaporanView: React.FC<LaporanViewProps> = ({
     .filter((t) => t.kategoriPengeluaran === 'GAJI')
     .reduce((acc, t) => acc + t.totalNominal, 0);
 
-  const expensePenyusutan = 9902700; // Depreciation
+  const expensePenyusutan = asetList.reduce((acc, a) => acc + (a.penyusutanBulanan || 0), 0);
   const netProfit = totalRevenue - (totalExpense + expensePenyusutan);
 
   // Balance Sheet Calculations
-  const totalKasBank = 45000000 + totalRevenue - totalExpense;
+  const totalKasBank = totalRevenue - totalExpense;
   const totalPiutang = hpList
     .filter((hp) => hp.jenis === 'PIUTANG' && hp.status === 'BELUM_LUNAS')
     .reduce((acc, hp) => acc + hp.sisaNominal, 0);
 
-  const totalNilaiAsetTetap = asetList.reduce((acc, a) => acc + a.nilaiBuku, 0);
+  const totalNilaiKandangPeralatan = asetList
+    .filter((a) => a.kategori !== 'BIOLOGIS_BEBEK')
+    .reduce((acc, a) => acc + a.nilaiBuku, 0);
+
+  const totalNilaiBiologis = asetList
+    .filter((a) => a.kategori === 'BIOLOGIS_BEBEK')
+    .reduce((acc, a) => acc + a.nilaiBuku, 0);
+
+  const totalNilaiAsetTetap = totalNilaiKandangPeralatan + totalNilaiBiologis;
   const totalAset = totalKasBank + totalPiutang + totalNilaiAsetTetap;
 
   const totalHutang = hpList
@@ -110,7 +118,7 @@ export const LaporanView: React.FC<LaporanViewProps> = ({
   };
 
   const handleExportExcel = () => {
-    ExportService.exportKeuanganExcel(transactions);
+    ExportService.exportLaporanLengkapExcel(transactions, [], asetList, hpList);
   };
 
   return (
@@ -321,11 +329,11 @@ export const LaporanView: React.FC<LaporanViewProps> = ({
                 <p className="font-bold text-slate-200">Aset Tetap (Nilai Buku):</p>
                 <div className="flex justify-between py-1 border-b border-slate-800/40">
                   <span>Bangunan Kandang & Peralatan</span>
-                  <span className="font-bold text-white">{formatIDR(153000000)}</span>
+                  <span className="font-bold text-white">{formatIDR(totalNilaiKandangPeralatan)}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-800/40">
                   <span>Aset Biologis (Populasi Bebek)</span>
-                  <span className="font-bold text-white">{formatIDR(146250000)}</span>
+                  <span className="font-bold text-white">{formatIDR(totalNilaiBiologis)}</span>
                 </div>
               </div>
 
