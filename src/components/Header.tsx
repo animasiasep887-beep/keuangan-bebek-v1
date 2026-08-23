@@ -1,5 +1,5 @@
 import React from 'react';
-import { Egg, Wallet, TrendingUp, Layers, ShieldCheck, Feather, CheckCircle2, TestTube2 } from 'lucide-react';
+import { Egg, Wallet, TrendingUp, Layers, ShieldCheck, Feather, CheckCircle2, TestTube2, Settings } from 'lucide-react';
 import type { FarmMetricsSummary } from '../types';
 import type { AppMode } from '../services/storage';
 import { formatIDR } from '../utils/exportUtils';
@@ -109,6 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
               { id: 'keuangan', label: 'Keuangan & Kas', icon: Wallet },
               { id: 'aset', label: 'Aset & Kewajiban', icon: ShieldCheck },
               { id: 'laporan', label: 'Laporan Keuangan', icon: TrendingUp },
+              { id: 'pengaturan', label: 'Pengaturan & Populasi', icon: Settings },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;

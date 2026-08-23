@@ -19,6 +19,7 @@ interface OperasionalViewProps {
   populasiList: PopulasiBebek[];
   pakanList: PakanItem[];
   onRefreshData: () => void;
+  setActiveTab?: (tab: string) => void;
 }
 
 export const OperasionalView: React.FC<OperasionalViewProps> = ({
@@ -27,8 +28,9 @@ export const OperasionalView: React.FC<OperasionalViewProps> = ({
   populasiList,
   pakanList,
   onRefreshData,
+  setActiveTab,
 }) => {
-  const [activeTab, setActiveTab] = useState<'form' | 'table' | 'pakan'>('form');
+  const [activeTab, setActiveTabLocal] = useState<'form' | 'table' | 'pakan'>('form');
 
   // Form State
   const [tanggal, setTanggal] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -97,7 +99,7 @@ export const OperasionalView: React.FC<OperasionalViewProps> = ({
 
     setTimeout(() => {
       setSuccessMessage(null);
-      setActiveTab('table');
+      setActiveTabLocal('table');
     }, 1500);
   };
 
@@ -168,40 +170,52 @@ export const OperasionalView: React.FC<OperasionalViewProps> = ({
         </div>
 
         {/* Tab Buttons */}
-        <div className="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800">
-          <button
-            onClick={() => setActiveTab('form')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-              activeTab === 'form'
-                ? 'bg-amber-500 text-slate-950 shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <PlusCircle className="w-4 h-4" />
-            Input Panen
-          </button>
-          <button
-            onClick={() => setActiveTab('table')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-              activeTab === 'table'
-                ? 'bg-amber-500 text-slate-950 shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            Riwayat Panen
-          </button>
-          <button
-            onClick={() => setActiveTab('pakan')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-              activeTab === 'pakan'
-                ? 'bg-amber-500 text-slate-950 shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Scale className="w-4 h-4" />
-            Stok Pakan
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800">
+            <button
+              onClick={() => setActiveTabLocal('form')}
+              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                activeTab === 'form'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <PlusCircle className="w-4 h-4" />
+              Input Panen
+            </button>
+            <button
+              onClick={() => setActiveTabLocal('table')}
+              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                activeTab === 'table'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              Riwayat Panen
+            </button>
+            <button
+              onClick={() => setActiveTabLocal('pakan')}
+              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                activeTab === 'pakan'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Scale className="w-4 h-4" />
+              Stok Pakan
+            </button>
+          </div>
+
+          {setActiveTab && (
+            <button
+              onClick={() => setActiveTab('pengaturan')}
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition-all flex items-center gap-1.5"
+            >
+              <PlusCircle className="w-4 h-4" />
+              + Kelola Batch Populasi
+            </button>
+          )}
         </div>
       </div>
 
@@ -215,10 +229,20 @@ export const OperasionalView: React.FC<OperasionalViewProps> = ({
       {/* VIEW 1: Form Input Panen Harian */}
       {activeTab === 'form' && (
         <div className="space-y-4">
-          {/* Card Panduan & Contoh Pengisian (Hanya Tulisan Referensi) */}
+          {/* Card Panduan & Contoh Pengisian */}
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-slate-300 space-y-2 text-xs">
-            <div className="flex items-center gap-2 font-bold text-amber-400 text-sm">
-              <span className="text-base">💡</span> Panduan & Contoh Pengisian Form Panen (Hanya Referensi Tulisan)
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-amber-400 text-sm">
+                <span className="text-base">💡</span> Panduan & Contoh Pengisian Form Panen
+              </div>
+              {setActiveTab && (
+                <button
+                  onClick={() => setActiveTab('pengaturan')}
+                  className="text-xs text-amber-400 hover:underline font-bold"
+                >
+                  ⚙️ Kelola Batch Populasi Bebek & Kandang →
+                </button>
+              )}
             </div>
             <p className="text-slate-300">
               Formulir di bawah ini <strong>murni dari 0 (kosong)</strong> agar Anda dapat memasukkan data asli peternakan Anda. Berikut adalah contoh standar pengisian data harian:
@@ -274,7 +298,18 @@ export const OperasionalView: React.FC<OperasionalViewProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">Batch Populasi Bebek</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-300">Batch Populasi Bebek</label>
+                {setActiveTab && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('pengaturan')}
+                    className="text-[11px] text-amber-400 hover:underline font-bold"
+                  >
+                    + Tambah Populasi
+                  </button>
+                )}
+              </div>
               <select
                 value={populasiId}
                 onChange={(e) => setPopulasiId(e.target.value)}

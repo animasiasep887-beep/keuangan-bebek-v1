@@ -5,6 +5,7 @@ import {
   Wallet,
   ShieldCheck,
   TrendingUp,
+  Settings,
 } from 'lucide-react';
 import { StorageService } from './services/storage';
 import type { AppMode } from './services/storage';
@@ -14,6 +15,7 @@ import { OperasionalView } from './components/OperasionalView';
 import { KeuanganView } from './components/KeuanganView';
 import { AsetKewajibanView } from './components/AsetKewajibanView';
 import { LaporanView } from './components/LaporanView';
+import { PengaturanView } from './components/PengaturanView';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -40,6 +42,20 @@ export function App() {
     setKodeAkunList(StorageService.getKodeAkun());
     setAsetList(StorageService.getAset());
     setHpList(StorageService.getHutangPiutang());
+  };
+
+  const handleResetZero = () => {
+    if (confirm('Apakah Anda yakin ingin mengosongkan seluruh data menjadi 0? Data saat ini di Akun Real akan di-reset.')) {
+      StorageService.clearRealData();
+      refreshAllData();
+    }
+  };
+
+  const handleResetDemo = () => {
+    if (confirm('Apakah Anda yakin ingin memuat ulang Data Demo simulasi 30 hari?')) {
+      StorageService.resetDemoData();
+      refreshAllData();
+    }
   };
 
   // Initialize storage once on load
@@ -105,6 +121,7 @@ export function App() {
             populasiList={populasiList}
             pakanList={pakanList}
             onRefreshData={refreshAllData}
+            setActiveTab={setActiveTab}
           />
         )}
 
@@ -131,6 +148,17 @@ export function App() {
             hpList={hpList}
           />
         )}
+
+        {activeTab === 'pengaturan' && (
+          <PengaturanView
+            kandangList={kandangList}
+            populasiList={populasiList}
+            kodeAkunList={kodeAkunList}
+            onRefreshData={refreshAllData}
+            onResetZero={handleResetZero}
+            onResetDemo={handleResetDemo}
+          />
+        )}
       </main>
 
       {/* Footer */}
@@ -140,7 +168,7 @@ export function App() {
         </div>
       </footer>
 
-      {/* Mobile Bottom Navigation Bar (Ultra Responsive for Farmers on Mobile) */}
+      {/* Mobile Bottom Navigation Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-slate-800 px-2 py-1.5 backdrop-blur-xl bg-slate-950/90">
         <div className="flex items-center justify-around">
           {[
@@ -149,6 +177,7 @@ export function App() {
             { id: 'keuangan', label: 'Kas', icon: Wallet },
             { id: 'aset', label: 'Aset', icon: ShieldCheck },
             { id: 'laporan', label: 'Laporan', icon: TrendingUp },
+            { id: 'pengaturan', label: 'Populasi', icon: Settings },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

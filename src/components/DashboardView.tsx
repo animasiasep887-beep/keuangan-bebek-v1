@@ -169,10 +169,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Card 4: Duck Population & Health */}
-        <div className="glass-panel rounded-2xl p-5 border border-slate-800 relative overflow-hidden group hover:border-slate-700 transition-all">
+        <div
+          onClick={() => setActiveTab('pengaturan')}
+          className="glass-panel rounded-2xl p-5 border border-slate-800 relative overflow-hidden group hover:border-amber-500/50 cursor-pointer transition-all"
+        >
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Populasi Bebek Hidup</p>
-            <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 group-hover:bg-amber-500/20 group-hover:text-amber-400 transition-colors">
               <Users className="w-5 h-5" />
             </div>
           </div>
@@ -180,8 +183,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
               {metrics.totalPopulasiHidup.toLocaleString('id-ID')} <span className="text-sm font-normal text-slate-400">ekor</span>
             </h3>
-            <div className="flex items-center justify-between mt-2 text-xs font-semibold text-slate-400">
+            <div className="flex items-center justify-between mt-2 text-xs font-semibold text-amber-400 group-hover:underline">
               <span>Rata-rata FCR: <strong className="text-sky-400">{metrics.fcrAverage}</strong></span>
+              <span>+ Kelola / Tambah →</span>
             </div>
           </div>
         </div>
