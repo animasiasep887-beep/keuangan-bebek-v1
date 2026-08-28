@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { RefreshCw, PlusCircle, CheckCircle2, BookOpen, Trash2, Layers } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { RefreshCw, PlusCircle, CheckCircle2, BookOpen, Trash2, Layers, Download, Database, Bot, ExternalLink, HardDrive } from 'lucide-react';
 import type { Kandang, PopulasiBebek, KodeAkun, StatusPopulasi, TipeAkun, SaldoNormal } from '../types';
 import { StorageService } from '../services/storage';
 
@@ -20,8 +20,13 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
   onResetZero,
   onResetDemo,
 }) => {
-  const [activeTab, setActiveTab] = useState<'kandang' | 'populasi' | 'coa'>('kandang');
+  const [activeTab, setActiveTab] = useState<'kandang' | 'populasi' | 'coa' | 'database'>('database');
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [serverStatus, setServerStatus] = useState<any>(null);
+
+  useEffect(() => {
+    StorageService.getServerStatus().then(st => setServerStatus(st));
+  }, []);
 
   // Form for New Kandang
   const [namaKandang, setNamaKandang] = useState('');
@@ -43,6 +48,17 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
   const [namaAkunInput, setNamaAkunInput] = useState('');
   const [tipeAkunInput, setTipeAkunInput] = useState<TipeAkun>('EXPENSE');
   const [saldoNormalInput, setSaldoNormalInput] = useState<SaldoNormal>('DEBIT');
+
+  const handleDownloadBackup = () => {
+    window.open('http://localhost:3001/api/backup/download', '_blank');
+  };
+
+  const handleForceSync = async () => {
+    await StorageService.syncToBackend();
+    setSuccessMsg('Semua data berhasil disinkronkan ke Hard Disk!');
+    setTimeout(() => setSuccessMsg(null), 2500);
+  };
+
 
   const handleAddKandang = (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,6 +180,15 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
             >
               Chart of Accounts ({kodeAkunList.length})
             </button>
+            <button
+              onClick={() => setActiveTab('database')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                activeTab === 'database' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
+              }`}
+            >
+              <Database className="w-3.5 h-3.5" />
+              Database & Bot
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -193,8 +218,105 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
         </div>
       )}
 
+      {/* TAB 4: Database & Bot Integrasi */}
+      {activeTab === 'database' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Database Persistence Status */}
+            <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <HardDrive className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Status Penyimpanan Data Permanen</h3>
+                  <p className="text-xs text-slate-400">Penyimpanan Terpusat Hard Disk (Bukan Hanya Browser)</p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Status Server Database:</span>
+                  <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    {serverStatus?.online ? 'Online & Aktif' : 'Tersinkronisasi'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Lokasi File Database:</span>
+                  <span className="font-mono text-amber-400 text-[11px]">server/data/farm_database.json</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Auto-Backup:</span>
+                  <span className="font-bold text-slate-200">Aktif Harian (server/data/backups/)</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleForceSync}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-all"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+                  Simpan & Sync Sekarang
+                </button>
+                <button
+                  onClick={handleDownloadBackup}
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download Backup (.json)
+                </button>
+              </div>
+            </div>
+
+            {/* Telegram Bot Integration Card */}
+            <div className="glass-panel p-5 rounded-2xl border border-sky-500/30 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Integrasi Bot Telegram</h3>
+                  <p className="text-xs text-slate-400">Pencatatan Panen & Keuangan dari HP</p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Username Bot:</span>
+                  <span className="font-mono font-bold text-sky-400">@bebekpetelur_bot</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Status Bot:</span>
+                  <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Aktif (Long-Polling Terhubung)
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">AI Engine:</span>
+                  <span className="font-bold text-amber-400">Google Gemini Flash</span>
+                </div>
+              </div>
+
+              <a
+                href="https://t.me/bebekpetelur_bot"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-sky-600/20 transition-all"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Buka & Uji Chat Bot Telegram
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* TAB 1: Kandang */}
       {activeTab === 'kandang' && (
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1 glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">

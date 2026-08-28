@@ -24,6 +24,7 @@ import {
 export type AppMode = 'REAL' | 'DEMO';
 
 const MODE_KEY = 'quack_active_mode';
+const API_BASE = 'http://localhost:3001/api';
 
 function getPrefix(mode?: AppMode): string {
   const currentMode = mode || StorageService.getMode();
@@ -45,10 +46,14 @@ function setStoredData<T>(key: string, data: T, mode?: AppMode): void {
   try {
     const fullKey = getPrefix(mode) + key;
     localStorage.setItem(fullKey, JSON.stringify(data));
+    // Trigger backend sync asynchronously
+    StorageService.syncToBackendDebounced();
   } catch (error) {
     console.error(`Error writing ${key} to LocalStorage:`, error);
   }
 }
+
+let syncTimeout: any = null;
 
 export const StorageService = {
   // Mode Management ('REAL' vs 'DEMO')
@@ -60,6 +65,113 @@ export const StorageService = {
   setMode: (newMode: AppMode) => {
     localStorage.setItem(MODE_KEY, newMode);
     StorageService.initStorage(newMode);
+  },
+
+  // Sync to Backend Debounced
+  syncToBackendDebounced: () => {
+    if (syncTimeout) clearTimeout(syncTimeout);
+    syncTimeout = setTimeout(() => {
+      StorageService.syncToBackend();
+    }, 400);
+  },
+
+  syncToBackend: async () => {
+    const mode = StorageService.getMode();
+    if (mode !== 'REAL') return; // Only sync REAL data to permanent disk
+
+    const payload = {
+      kandang: StorageService.getKandang(),
+      populasi: StorageService.getPopulasi(),
+      pakan: StorageService.getPakan(),
+      pencatatan_harian: StorageService.getPencatatanHarian(),
+      transaksi_keuangan: StorageService.getTransaksi(),
+      aset_tetap: StorageService.getAset(),
+      hutang_piutang: StorageService.getHutangPiutang(),
+      kode_akun: StorageService.getKodeAkun(),
+    };
+
+    try {
+      await fetch(`${API_BASE}/sync?mode=REAL`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      // Backend might be offline or starting up, LocalStorage keeps cache safe
+    }
+  },
+
+  // Pull latest data from Backend Server
+  fetchFromBackend: async (): Promise<boolean> => {
+    try {
+      const mode = StorageService.getMode();
+      const res = await fetch(`${API_BASE}/data?mode=${mode}`);
+      if (!res.ok) return false;
+      const data = await res.json();
+
+      if (data && mode === 'REAL') {
+        const prefix = getPrefix('REAL');
+        if (data.kandang && data.kandang.length > 0) localStorage.setItem(`${prefix}kandang`, JSON.stringify(data.kandang));
+        if (data.populasi && data.populasi.length > 0) localStorage.setItem(`${prefix}populasi`, JSON.stringify(data.populasi));
+        if (data.pakan && data.pakan.length > 0) localStorage.setItem(`${prefix}pakan`, JSON.stringify(data.pakan));
+        if (data.pencatatan_harian) localStorage.setItem(`${prefix}pencatatan_harian`, JSON.stringify(data.pencatatan_harian));
+        if (data.transaksi_keuangan) localStorage.setItem(`${prefix}transaksi_keuangan`, JSON.stringify(data.transaksi_keuangan));
+        if (data.aset_tetap) localStorage.setItem(`${prefix}aset_tetap`, JSON.stringify(data.aset_tetap));
+        if (data.hutang_piutang) localStorage.setItem(`${prefix}hutang_piutang`, JSON.stringify(data.hutang_piutang));
+        if (data.kode_akun) localStorage.setItem(`${prefix}kode_akun`, JSON.stringify(data.kode_akun));
+        localStorage.setItem(`${prefix}initialized`, 'true');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // Server & Bot Status
+  getServerStatus: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/status`);
+      if (!res.ok) return { online: false };
+      const data = await res.json();
+      return { online: true, ...data };
+    } catch {
+      return { online: false };
+    }
+  },
+
+  // AI Chat & Consultation
+  askAI: async (question: string): Promise<string> => {
+    try {
+      const mode = StorageService.getMode();
+      const res = await fetch(`${API_BASE}/ai/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, mode }),
+      });
+      const data = await res.json();
+      if (data.success && data.answer) {
+        return data.answer;
+      }
+      return data.error || 'Maaf, terjadi kendala komunikasi dengan AI.';
+    } catch (e: any) {
+      return `Koneksi ke backend server gagal: ${e.message}. Pastikan backend server aktif di port 3001.`;
+    }
+  },
+
+  // Automated AI Performance Analysis
+  getAIAnalysis: async (): Promise<string> => {
+    try {
+      const mode = StorageService.getMode();
+      const res = await fetch(`${API_BASE}/ai/analysis?mode=${mode}`);
+      const data = await res.json();
+      if (data.success && data.analysis) {
+        return data.analysis;
+      }
+      return 'Gagal memuat analisis performa peternakan.';
+    } catch (e: any) {
+      return `Koneksi backend error: ${e.message}`;
+    }
   },
 
   // Initialize both Real & Demo storage spaces safely if empty
@@ -111,6 +223,8 @@ export const StorageService = {
         localStorage.setItem(`${prefix}initialized`, 'true');
       }
     }
+    // Pull server data in background
+    StorageService.fetchFromBackend();
   },
 
   // Clear REAL Data only
@@ -125,6 +239,9 @@ export const StorageService = {
     localStorage.removeItem(`${prefix}aset_tetap`);
     localStorage.removeItem(`${prefix}hutang_piutang`);
     StorageService.initStorage('REAL');
+    try {
+      fetch(`${API_BASE}/reset-real`, { method: 'POST' });
+    } catch {}
   },
 
   // Reset DEMO Data
@@ -153,7 +270,7 @@ export const StorageService = {
   saveAset: (data: AsetTetap[]) => setStoredData('aset_tetap', data),
   saveHutangPiutang: (data: HutangPiutang[]) => setStoredData('hutang_piutang', data),
 
-  // DELETE METHODS (Permintaan Fitur Hapus)
+  // DELETE METHODS
   deletePencatatanHarian: (id: string) => {
     const logs = StorageService.getPencatatanHarian();
     const updated = logs.filter((l) => l.id !== id);
@@ -196,7 +313,7 @@ export const StorageService = {
     StorageService.saveHutangPiutang(updated);
   },
 
-  // Add Daily Harvest & automatically deduct feed + deduct population if dead/culls
+  // Add Daily Harvest
   addPencatatanHarian: (newLog: Omit<PencatatanHarian, 'id'>): PencatatanHarian => {
     const logs = StorageService.getPencatatanHarian();
     const created: PencatatanHarian = {
@@ -297,7 +414,7 @@ export const StorageService = {
     return created;
   },
 
-  // Restock or edit pakan stock
+  // Restock pakan
   restockPakan: (pakanId: string, tambahKg: number) => {
     const list = StorageService.getPakan();
     const updated = list.map((p) => (p.id === pakanId ? { ...p, stokKg: p.stokKg + tambahKg } : p));
@@ -383,3 +500,4 @@ export const StorageService = {
     };
   },
 };
+

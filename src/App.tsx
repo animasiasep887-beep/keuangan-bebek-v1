@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   TrendingUp,
   Settings,
+  Bot,
 } from 'lucide-react';
 import { StorageService } from './services/storage';
 import type { AppMode } from './services/storage';
@@ -16,6 +17,7 @@ import { KeuanganView } from './components/KeuanganView';
 import { AsetKewajibanView } from './components/AsetKewajibanView';
 import { LaporanView } from './components/LaporanView';
 import { PengaturanView } from './components/PengaturanView';
+import { AIAssistantView } from './components/AIAssistantView';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -58,10 +60,22 @@ export function App() {
     }
   };
 
-  // Initialize storage once on load
+  // Initialize storage once on load & periodically fetch latest updates from Telegram/Backend
   useEffect(() => {
     StorageService.initStorage();
-    refreshAllData();
+    StorageService.fetchFromBackend().then(() => {
+      refreshAllData();
+    });
+
+    // Background sync every 4 seconds to receive updates made via Telegram Bot
+    const interval = setInterval(async () => {
+      const updated = await StorageService.fetchFromBackend();
+      if (updated) {
+        refreshAllData();
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleToggleMode = (newMode: AppMode) => {
@@ -96,7 +110,7 @@ export function App() {
         }`}
       >
         {appMode === 'REAL' ? (
-          <span>🟢 <strong>AKUN REAL (PETERNAKAN SAYA)</strong> — Data Anda tersimpan secara otomatis & aman.</span>
+          <span>🟢 <strong>AKUN REAL (PETERNAKAN SAYA)</strong> — Data tersimpan aman & permanen di Hard Disk + Terhubung ke Bot Telegram.</span>
         ) : (
           <span>🧪 <strong>MODE DEMO (SIMULASI 30 HARI)</strong> — Menggunakan data contoh untuk simulasi & uji coba fitur.</span>
         )}
@@ -149,6 +163,12 @@ export function App() {
           />
         )}
 
+        {activeTab === 'ai' && (
+          <AIAssistantView
+            metrics={metrics}
+          />
+        )}
+
         {activeTab === 'pengaturan' && (
           <PengaturanView
             kandangList={kandangList}
@@ -176,8 +196,9 @@ export function App() {
             { id: 'operasional', label: 'Panen', icon: Egg },
             { id: 'keuangan', label: 'Kas', icon: Wallet },
             { id: 'aset', label: 'Aset', icon: ShieldCheck },
+            { id: 'ai', label: 'AI & Bot', icon: Bot },
             { id: 'laporan', label: 'Laporan', icon: TrendingUp },
-            { id: 'pengaturan', label: 'Populasi', icon: Settings },
+            { id: 'pengaturan', label: 'Database', icon: Settings },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -203,3 +224,4 @@ export function App() {
 }
 
 export default App;
+

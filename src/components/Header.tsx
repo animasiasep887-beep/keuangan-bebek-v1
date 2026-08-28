@@ -1,5 +1,5 @@
 import React from 'react';
-import { Egg, Wallet, TrendingUp, Layers, ShieldCheck, Feather, CheckCircle2, TestTube2, Settings } from 'lucide-react';
+import { Egg, Wallet, TrendingUp, Layers, ShieldCheck, Feather, CheckCircle2, TestTube2, Settings, Sparkles } from 'lucide-react';
 import type { FarmMetricsSummary } from '../types';
 import type { AppMode } from '../services/storage';
 import { formatIDR } from '../utils/exportUtils';
@@ -72,10 +72,20 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Quick Metrics Badges */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Quick Metrics Badges & Bot Link */}
+          <div className="hidden md:flex items-center gap-3">
+            {/* AI / Bot Quick Action */}
+            <button
+              onClick={() => setActiveTab('ai')}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-950/80 to-sky-950/80 border border-emerald-500/40 hover:border-emerald-400 text-emerald-300 text-xs font-bold transition-all shadow-md"
+            >
+              <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
+              <span>Asisten AI & Bot</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            </button>
+
             {/* Saldo Kas Badge */}
-            <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800">
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
                 <Wallet className="w-4 h-4" />
               </div>
@@ -86,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* HDP Hari Ini Badge */}
-            <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800">
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
                 <TrendingUp className="w-4 h-4" />
               </div>
@@ -109,7 +119,8 @@ export const Header: React.FC<HeaderProps> = ({
               { id: 'keuangan', label: 'Keuangan & Kas', icon: Wallet },
               { id: 'aset', label: 'Aset & Kewajiban', icon: ShieldCheck },
               { id: 'laporan', label: 'Laporan Keuangan', icon: TrendingUp },
-              { id: 'pengaturan', label: 'Pengaturan & Populasi', icon: Settings },
+              { id: 'ai', label: '🤖 Asisten AI & Bot Telegram', icon: Sparkles },
+              { id: 'pengaturan', label: 'Pengaturan & Database', icon: Settings },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -134,3 +145,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+

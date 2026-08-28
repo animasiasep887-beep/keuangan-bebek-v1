@@ -1,0 +1,199 @@
+{
+  "REAL": {
+    "kandang": [
+      {
+        "id": "k-1",
+        "namaKandang": "Kandang 1 (Utama)",
+        "kapasitas": 1000,
+        "status": "AKTIF",
+        "catatan": "Unit kandang utama"
+      }
+    ],
+    "populasi": [
+      {
+        "id": "pop-1",
+        "kandangId": "k-1",
+        "kodeBatch": "BATCH-01",
+        "tglMasuk": "2026-08-28",
+        "jumlahAwal": 500,
+        "jumlahSaatIni": 500,
+        "hargaBeliPerEkor": 75000,
+        "umurMinggu": 24,
+        "status": "PRODUKTIF"
+      }
+    ],
+    "pakan": [
+      {
+        "id": "pak-1",
+        "namaPakan": "Konsentrat Bebek Petelur K-99",
+        "merk": "Standard",
+        "stokKg": 500,
+        "hargaPerKg": 8000,
+        "minStokKg": 100
+      }
+    ],
+    "kode_akun": [
+      {
+        "id": "101",
+        "kode": "101",
+        "nama": "Kas Peternakan",
+        "tipe": "ASSET",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "102",
+        "kode": "102",
+        "nama": "Bank / Rekening Operasional",
+        "tipe": "ASSET",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "103",
+        "kode": "103",
+        "nama": "Piutang Penjualan Telur",
+        "tipe": "ASSET",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "104",
+        "kode": "104",
+        "nama": "Persediaan Pakan & Suplemen",
+        "tipe": "ASSET",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "105",
+        "kode": "105",
+        "nama": "Persediaan Telur Siap Jual",
+        "tipe": "ASSET",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "121",
+        "kode": "121",
+        "nama": "Aset Biologis (Bebek Petelur)",
+        "tipe": "ASSET",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "122",
+        "kode": "122",
+        "nama": "Bangunan Kandang",
+        "tipe": "ASSET",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "123",
+        "kode": "123",
+        "nama": "Akumulasi Penyusutan Aset",
+        "tipe": "ASSET",
+        "saldoNormal": "KREDIT"
+      },
+      {
+        "id": "201",
+        "kode": "201",
+        "nama": "Hutang Usaha Pakan",
+        "tipe": "LIABILITY",
+        "saldoNormal": "KREDIT"
+      },
+      {
+        "id": "202",
+        "kode": "202",
+        "nama": "Hutang Operasional Lainnya",
+        "tipe": "LIABILITY",
+        "saldoNormal": "KREDIT"
+      },
+      {
+        "id": "301",
+        "kode": "301",
+        "nama": "Modal Pemilik Peternakan",
+        "tipe": "EQUITY",
+        "saldoNormal": "KREDIT"
+      },
+      {
+        "id": "302",
+        "kode": "302",
+        "nama": "Laba Ditahan / Akumulasi Laba",
+        "tipe": "EQUITY",
+        "saldoNormal": "KREDIT"
+      },
+      {
+        "id": "401",
+        "kode": "401",
+        "nama": "Pendapatan Penjualan Telur Grade A",
+        "tipe": "REVENUE",
+        "saldoNormal": "KREDIT"
+      },
+      {
+        "id": "402",
+        "kode": "402",
+        "nama": "Pendapatan Penjualan Telur Grade B (Retak)",
+        "tipe": "REVENUE",
+        "saldoNormal": "KREDIT"
+      },
+      {
+        "id": "403",
+        "kode": "403",
+        "nama": "Pendapatan Penjualan Bebek Afkir",
+        "tipe": "REVENUE",
+        "saldoNormal": "KREDIT"
+      },
+      {
+        "id": "404",
+        "kode": "404",
+        "nama": "Pendapatan Penjualan Pupuk Kandang",
+        "tipe": "REVENUE",
+        "saldoNormal": "KREDIT"
+      },
+      {
+        "id": "501",
+        "kode": "501",
+        "nama": "Beban Pokok Produksi - Pakan Konsentrat",
+        "tipe": "EXPENSE",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "502",
+        "kode": "502",
+        "nama": "Beban Vaksin, Vitamin & Obat",
+        "tipe": "EXPENSE",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "503",
+        "kode": "503",
+        "nama": "Beban Upah & Tenaga Kerja",
+        "tipe": "EXPENSE",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "504",
+        "kode": "504",
+        "nama": "Beban Listrik, Air & Sekam",
+        "tipe": "EXPENSE",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "505",
+        "kode": "505",
+        "nama": "Beban Perbaikan & Pemeliharaan Kandang",
+        "tipe": "EXPENSE",
+        "saldoNormal": "DEBIT"
+      },
+      {
+        "id": "506",
+        "kode": "506",
+        "nama": "Beban Penyusutan Aset",
+        "tipe": "EXPENSE",
+        "saldoNormal": "DEBIT"
+      }
+    ],
+    "pencatatan_harian": [],
+    "transaksi_keuangan": [],
+    "aset_tetap": [],
+    "hutang_piutang": []
+  },
+  "DEMO": null,
+  "mode": "REAL",
+  "lastUpdated": "2026-08-28T18:20:42.906Z"
+}
