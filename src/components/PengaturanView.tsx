@@ -50,7 +50,7 @@ export const PengaturanView: React.FC<PengaturanViewProps> = ({
   const [saldoNormalInput, setSaldoNormalInput] = useState<SaldoNormal>('DEBIT');
 
   const handleDownloadBackup = () => {
-    window.open('http://localhost:3001/api/backup/download', '_blank');
+    window.open('/api/backup/download', '_blank');
   };
 
   const handleForceSync = async () => {

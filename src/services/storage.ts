@@ -24,7 +24,9 @@ import {
 export type AppMode = 'REAL' | 'DEMO';
 
 const MODE_KEY = 'quack_active_mode';
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '5173'
+  ? 'http://localhost:3001/api'
+  : '/api';
 
 function getPrefix(mode?: AppMode): string {
   const currentMode = mode || StorageService.getMode();
