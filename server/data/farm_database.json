@@ -208,33 +208,11 @@
         "fcr": 0
       }
     ],
-    "transaksi_keuangan": [
-      {
-        "tipeTransaksi": "PENDAPATAN",
-        "totalNominal": 15000,
-        "deskripsi": "Penjualan 10 butir telur (via Telegram)",
-        "items": [
-          {
-            "akunId": "101",
-            "debit": 15000,
-            "kredit": 0
-          },
-          {
-            "akunId": "401",
-            "debit": 0,
-            "kredit": 15000
-          }
-        ],
-        "createdBy": "Telegram (@あなたの敵)",
-        "id": "trx-1787941674816",
-        "tanggal": "2026-08-28",
-        "noRef": "TRX-20260828-885"
-      }
-    ],
+    "transaksi_keuangan": [],
     "aset_tetap": [],
     "hutang_piutang": []
   },
   "DEMO": null,
   "mode": "REAL",
-  "lastUpdated": "2026-08-28T18:27:54.816Z"
+  "lastUpdated": "2026-08-28T19:14:16.894Z"
 }

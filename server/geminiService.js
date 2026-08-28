@@ -159,10 +159,82 @@ Jika PERTANYAAN:
       const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
       return JSON.parse(cleanJson);
     } catch (e) {
-      console.error('[GEMINI] Error parsing natural language:', e);
+      console.warn('[GEMINI] AI parsing failed, using smart local parser fallback:', e.message);
+      
+      // Smart Local Fallback Parser (Zero dependency)
+      const lower = userInput.toLowerCase();
+
+      // Check for egg harvest pattern (e.g. "bertelur 91", "panen 91", "91 telur")
+      const harvestMatch = lower.match(/(?:bertelur|panen|dapat|telur)\s*(\d+)/i) || lower.match(/(\d+)\s*(?:butir|telur)/i);
+      if (harvestMatch && (lower.includes('telur') || lower.includes('panen') || lower.includes('bertelur'))) {
+        const telurCount = parseInt(harvestMatch[1], 10) || 0;
+        const pakanMatch = lower.match(/pakan\s*(\d+)/i);
+        const matiMatch = lower.match(/mati\s*(\d+)/i);
+
+        return {
+          type: 'PANEN',
+          data: {
+            telurUtuh: telurCount,
+            telurRetak: 0,
+            telurRusak: 0,
+            pakanKg: pakanMatch ? parseInt(pakanMatch[1], 10) : 0,
+            bebekMati: matiMatch ? parseInt(matiMatch[1], 10) : 0,
+            bebekAfkir: 0,
+            catatan: `Input otomatis via chat: "${userInput}"`
+          },
+          explanation: `Terdeteksi panen ${telurCount} butir telur.`
+        };
+      }
+
+      // Check for sales/income pattern (e.g. "jual 10 telur 15k", "jual telur 50000")
+      if (lower.includes('jual') || lower.includes('masuk') || lower.includes('laku') || lower.includes('dapat uang')) {
+        let nominal = 0;
+        const kMatch = lower.match(/(\d+)\s*k\b/i);
+        const rbMatch = lower.match(/(\d+)\s*rb\b/i) || lower.match(/(\d+)\s*ribu\b/i);
+        const numberMatch = lower.match(/(?:rp|sebesar|harga)?\s*(\d{4,})/i);
+
+        if (kMatch) nominal = parseInt(kMatch[1], 10) * 1000;
+        else if (rbMatch) nominal = parseInt(rbMatch[1], 10) * 1000;
+        else if (numberMatch) nominal = parseInt(numberMatch[1], 10);
+
+        return {
+          type: 'TRANSAKSI',
+          data: {
+            tipeTransaksi: 'PENDAPATAN',
+            totalNominal: nominal || 50000,
+            deskripsi: userInput,
+            kategori: 'TELUR_GRADE_A'
+          },
+          explanation: `Terdeteksi pemasukan penjualan ${nominal ? 'Rp ' + nominal.toLocaleString('id-ID') : ''}.`
+        };
+      }
+
+      // Check for expense pattern (e.g. "beli pakan 50k", "keluar uang 100000")
+      if (lower.includes('beli') || lower.includes('keluar') || lower.includes('bayar') || lower.includes('biaya')) {
+        let nominal = 0;
+        const kMatch = lower.match(/(\d+)\s*k\b/i);
+        const rbMatch = lower.match(/(\d+)\s*rb\b/i) || lower.match(/(\d+)\s*ribu\b/i);
+        const numberMatch = lower.match(/(?:rp|sebesar|harga)?\s*(\d{4,})/i);
+
+        if (kMatch) nominal = parseInt(kMatch[1], 10) * 1000;
+        else if (rbMatch) nominal = parseInt(rbMatch[1], 10) * 1000;
+        else if (numberMatch) nominal = parseInt(numberMatch[1], 10);
+
+        return {
+          type: 'TRANSAKSI',
+          data: {
+            tipeTransaksi: 'PENGELUARAN',
+            totalNominal: nominal || 50000,
+            deskripsi: userInput,
+            kategori: lower.includes('pakan') ? 'PAKAN' : 'OPERASIONAL_KANDANG'
+          },
+          explanation: `Terdeteksi pengeluaran biaya ${nominal ? 'Rp ' + nominal.toLocaleString('id-ID') : ''}.`
+        };
+      }
+
       return {
         type: 'PERTANYAAN',
-        answer: await this.askFarmConsultant(userInput, farmData)
+        answer: 'Terima kasih atas pesannya! Untuk mencatat panen silakan gunakan contoh: "/panen 430 10 2 50 1" atau ketik "panen 430 telur".'
       };
     }
   },
